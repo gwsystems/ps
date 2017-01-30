@@ -49,9 +49,6 @@
 #ifndef PS_LIST_H
 #define PS_LIST_H
 
-#define ALT
-#ifdef ALT
-
 struct ps_list {
 	struct ps_list *n, *p;
 };
@@ -188,96 +185,5 @@ ps_list_ll_rem(struct ps_list *l)
 	     (iter) = (tmp), (tmp) = ps_list_next((tmp), lname))
 
 #define ps_list_foreach_del_d(head, iter, tmp) ps_list_foreach_del(head, iter, tmp, PS_LIST_DEF_NAME)
-
-
-
-
-
-
-
-
-
-
-
-
-
-#else
-
-struct ps_list {
-	void *next, *prev;
-};
-
-struct ps_list_head {
-	struct ps_list list;
-};
-
-#define ps_offsetof(s, field) __builtin_offsetof(s, field)
-//#define ps_offsetof(s, field) ((unsigned long)&(((s *)0)->field))
-
-#define ps_container(intern, type, field)				\
-	((type *)((char *)(intern) - ps_offsetof(type, field)))
-#define ps_list_head(head, type, l) ps_container((head), type, l)
-
-#define ps_list_init(obj, l)					\
-	do { (obj)->l.next = (obj)->l.prev = (obj); } while (0)
-#define ps_list_head_init(obj, type, l)				\
-	do { (obj)->list.next = (obj)->list.prev = ps_list_head(obj, type, l); } while (0)
-
-#define ps_list_first(obj, l) ((__typeof__(obj))((obj)->l.next))
-#define ps_list_last(obj, l)  ((__typeof__(obj))((obj)->l.prev))
-#define ps_list_next(obj, l)  ps_list_first(obj, l)
-#define ps_list_prev(obj, l)  ps_list_last(obj, l)
-#define ps_list_head_first(head, type, l) ps_list_next(ps_container((head), type, l), l)
-
-#define ps_list_iter_init(head, iter, l) ((iter) = ps_list_head_first((head), __typeof__(*iter), l))
-#define ps_list_iter_term(head, iter, l) (ps_list_head(head, __typeof__(*iter), l) == iter)
-
-/* Iteration without mutating the list */
-#define ps_list_foreach(head, iter, l)			\
-	for (ps_list_iter_init((head), (iter), l)  ;	\
-	     !ps_list_iter_term((head), (iter), l) ;	\
-	     (iter) = ps_list_next((iter), l))
-/*
- * Iteration where the current node can be ps_list_rem'ed.
- * Notes:
- * - typeof(iter) == typeof(tmp)
- * - ps_list_add can be used on iter, but the added node will not be iterated over
- *
- * TODO: Add SMR/parallel version of this macro
- */
-#define ps_list_foreach_del(head, iter, tmp, l)				\
-	for (ps_list_iter_init((head), (iter), l), (tmp) = ps_list_next((iter), l) ; \
-	     !ps_list_iter_term((head), (iter), l) ;			\
-	     (iter) = (tmp), (tmp) = ps_list_next((tmp), l))
-
-/*
- * FIXME: add compiler barrier after setting the new node's ->next
- * value.
- *
- * TODO: Provide a variant on this macro that uses cas for the
- * modification.
- */
-#define ps_list_add(obj, new, l) do {		\
-	(new)->l.next = ps_list_next(obj, l);	\
-	(new)->l.prev = (obj);			\
-	ps_list_next(new, l)->l.prev = (new);	\
-	(obj)->l.next = (new); } while (0)
-
-#define ps_list_head_add(head, new, l)					\
-	ps_list_add(ps_list_head(head, __typeof__(*new), l), new, l)
-#define ps_list_head_append(head, new, l)			\
-	ps_list_add(ps_list_prev(ps_list_head(head, __typeof__(*new), l), l), new, l)
-
-/* Note we don't reset ->next as there might be concurrent reads */
-#define ps_list_rem(obj, l) do {				\
-	ps_list_next(obj, l)->l.prev = (obj)->l.prev;           \
-	ps_list_prev(obj, l)->l.next = (obj)->l.next;           \
-	(obj)->l.prev = (obj); } while (0)
-
-/* use prev here so that this works with rem */
-#define ps_list_singleton(obj, l)   (ps_list_prev((obj), l) == (obj))
-#define ps_list_head_empty(head, type, l) ps_list_singleton(ps_list_head((head), type, l), l)
-
-#endif
 
 #endif	/* PS_LIST_H */
