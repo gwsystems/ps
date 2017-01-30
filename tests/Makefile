@@ -1,10 +1,10 @@
-CINC    = -I../ -I. -I../plat/
+CINC    = -I../plat/ -I../ -I.
 CC      = gcc
 LD      = $(CC)
 LDFLAGS = -pthread -L..
-COPT    = -g
+COPT    = -O3
 CWARN   = -Wno-long-long
-CFLAGS  = -Wall -Wpedantic -Wextra -pthread $(CWARN) $(COPT)
+CFLAGS  = -std=c11 -Wall -Wpedantic -Wextra -pthread $(CWARN) $(COPT)
 
 # library
 CFILES  = $(wildcard ../*.c)
@@ -40,7 +40,7 @@ setup: setup-linux64
 	rm -f $@.$$$$
 
 %.o:%.c
-	$(CC) -I.. $(CINC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CINC) $(CFLAGS) -o $@ -c $<
 
 $(CLIB):$(COBJS) $(PCOBJS)
 	$(AR) cr $@ $^

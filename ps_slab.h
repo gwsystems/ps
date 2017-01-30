@@ -83,7 +83,7 @@ __ps_slab_freelist_check(struct ps_slab_freelist *fl)
 		assert(ps_list_prev(ps_list_next(s, list), list) == s);
 		assert(ps_list_next(ps_list_prev(s, list), list) == s);
 		__ps_slab_check_consistency(s);
-	} while ((s = ps_list_first(s, list)) != fl->list);
+	} while ((s = ps_list_next(s, list)) != fl->list);
 }
 #else  /* PS_SLAB_DEBUG */
 static inline void __ps_slab_check_consistency(struct ps_slab *s) { (void)s; }
@@ -95,8 +95,8 @@ __slab_freelist_rem(struct ps_slab_freelist *fl, struct ps_slab *s)
 {
 	assert(s && fl);
 	if (fl->list == s) {
-		if (ps_list_empty(s, list)) fl->list = NULL;
-		else                        fl->list = ps_list_first(s, list);
+		if (ps_list_singleton(s, list)) fl->list = NULL;
+		else                            fl->list = ps_list_next(s, list);
 	}
 	ps_list_rem(s, list);
 }
@@ -105,7 +105,7 @@ static void
 __slab_freelist_add(struct ps_slab_freelist *fl, struct ps_slab *s)
 {
 	assert(s && fl);
-	assert(ps_list_empty(s, list));
+	assert(ps_list_singleton(s, list));
 	assert(s != fl->list);
 	if (fl->list) ps_list_add(fl->list, s, list);
 	fl->list = s;
@@ -179,7 +179,7 @@ __ps_slab_mem_free(void *buf, struct ps_mem *mem, PS_SLAB_PARAMS)
 	} else if (s->nfree == 1) {
 		fl = &mem->percore[coreid].slab_info.fl;
 		/* add back onto the freelists */
-		assert(ps_list_empty(s, list));
+		assert(ps_list_singleton(s, list));
 		assert(s->memory && s->freelist);
 		__slab_freelist_add(fl, s);
 	}
@@ -224,7 +224,7 @@ __ps_slab_mem_alloc(struct ps_mem *mem, PS_SLAB_PARAMS)
 	/* remove from the freelist */
 	if (s->nfree == 0) {
 		__slab_freelist_rem(&si->fl, s);
-		assert(ps_list_empty(s, list));
+		assert(ps_list_singleton(s, list));
 	}
 	assert(!__ps_mhead_isfree(h));
 	__ps_slab_freelist_check(&si->fl);
@@ -244,52 +244,52 @@ __ps_slab_mem_alloc(struct ps_mem *mem, PS_SLAB_PARAMS)
  * optimizations is better than putting all of the code for allocation
  * and deallocation in the macro due to maintenance and readability.
  */
-#define __PS_SLAB_CREATE_FNS(name, obj_sz, allocsz, headoff, afn, ffn)			\
-inline void *										\
-ps_slabptr_alloc_##name(struct ps_mem *m)						\
-{ return __ps_slab_mem_alloc(m, ps_coreid(), obj_sz, allocsz, headoff, afn, ffn); }	\
-inline void										\
-ps_slabptr_free_coreid_##name(struct ps_mem *m, void *buf, coreid_t coreid)		\
-{ __ps_slab_mem_free(buf, m, coreid, obj_sz, allocsz, headoff, afn, ffn); }		\
-inline void										\
-ps_slabptr_free_##name(struct ps_mem *m, void *buf)					\
-{ ps_slabptr_free_coreid_##name(m, buf, ps_coreid()); }					\
-inline void *										\
-ps_slab_alloc_##name(void)								\
-{ return ps_slabptr_alloc_##name(&__ps_mem_##name); }					\
-inline void										\
-ps_slab_free_##name(void *buf)								\
-{ ps_slabptr_free_##name(&__ps_mem_##name, buf); }					\
-inline void										\
-ps_slab_free_coreid_##name(void *buf, coreid_t curr)					\
-{ ps_slabptr_free_coreid_##name(&__ps_mem_##name, buf, curr); }				\
-inline void										\
-ps_slabptr_init_##name(struct ps_mem *m)						\
-{ ps_slabptr_init(m); }									\
-inline void										\
-ps_slab_init_##name(void)								\
-{ ps_slabptr_init_##name(&__ps_mem_##name); }						\
-inline struct ps_mem *									\
-ps_slabptr_create_##name(void)								\
-{											\
-	struct ps_mem *m = ps_plat_alloc(sizeof(struct ps_mem), ps_coreid());		\
-	if (m) ps_slabptr_init_##name(m);						\
-	return m;									\
-}											\
-inline void										\
-ps_slabptr_delete_##name(struct ps_mem *m)						\
-{ ps_plat_free(m, sizeof(struct ps_mem), ps_coreid()); }				\
-inline size_t										\
-ps_slab_objmem_##name(void)								\
-{ return __ps_slab_objmemsz(obj_sz); }							\
-inline size_t										\
-ps_slab_nobjs_##name(void)								\
-{ return __ps_slab_max_nobjs(obj_sz, allocsz, headoff); }				\
-inline unsigned int									\
-ps_slab_objoff_##name(void *obj)							\
-{											\
-	struct ps_mheader *h = __ps_mhead_get(obj);					\
-	return __ps_slab_objsoff(h->slab, h, obj_sz, headoff);				\
+#define __PS_SLAB_CREATE_FNS(name, obj_sz, allocsz, headoff, afn, ffn)	\
+static inline void *							\
+ps_slabptr_alloc_##name(struct ps_mem *m)				\
+{ return __ps_slab_mem_alloc(m, ps_coreid(), obj_sz, allocsz, headoff, afn, ffn); } \
+static inline void							\
+ps_slabptr_free_coreid_##name(struct ps_mem *m, void *buf, coreid_t coreid) \
+{ __ps_slab_mem_free(buf, m, coreid, obj_sz, allocsz, headoff, afn, ffn); } \
+static inline void							\
+ps_slabptr_free_##name(struct ps_mem *m, void *buf)			\
+{ ps_slabptr_free_coreid_##name(m, buf, ps_coreid()); }			\
+static inline void *							\
+ps_slab_alloc_##name(void)						\
+{ return ps_slabptr_alloc_##name(&__ps_mem_##name); }			\
+static inline void							\
+ps_slab_free_##name(void *buf)						\
+{ ps_slabptr_free_##name(&__ps_mem_##name, buf); }			\
+static inline void							\
+ps_slab_free_coreid_##name(void *buf, coreid_t curr)			\
+{ ps_slabptr_free_coreid_##name(&__ps_mem_##name, buf, curr); }		\
+static inline void							\
+ps_slabptr_init_##name(struct ps_mem *m)				\
+{ ps_slabptr_init(m); }							\
+static inline void							\
+ps_slab_init_##name(void)						\
+{ ps_slabptr_init_##name(&__ps_mem_##name); }				\
+static inline struct ps_mem *						\
+ps_slabptr_create_##name(void)						\
+{									\
+	struct ps_mem *m = ps_plat_alloc(sizeof(struct ps_mem), ps_coreid()); \
+	if (m) ps_slabptr_init_##name(m);				\
+	return m;							\
+}									\
+static inline void							\
+ps_slabptr_delete_##name(struct ps_mem *m)				\
+{ ps_plat_free(m, sizeof(struct ps_mem), ps_coreid()); }		\
+static inline size_t							\
+ps_slab_objmem_##name(void)						\
+{ return __ps_slab_objmemsz(obj_sz); }					\
+static inline size_t							\
+ps_slab_nobjs_##name(void)						\
+{ return __ps_slab_max_nobjs(obj_sz, allocsz, headoff); }		\
+static inline unsigned int						\
+ps_slab_objoff_##name(void *obj)					\
+{									\
+	struct ps_mheader *h = __ps_mhead_get(obj);			\
+	return __ps_slab_objsoff(h->slab, h, obj_sz, headoff);		\
 }
 
 /*

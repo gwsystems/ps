@@ -105,6 +105,8 @@ thd_set_affinity(pthread_t tid, int id)
 	/* set_prio(); */
 	/* confirm that the library's version of coreid == benchmark's */
 	ps_tsc_locality(&cid, &n);
+
+	printf("desired core %d, actual %d, pthreads %d\n", cpuid, cid, sched_getcpu());
 	assert(cpuid == cid);
 }
 

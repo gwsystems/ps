@@ -36,7 +36,7 @@ test_slab_alloc_lkup(void)
 
 	printf("--------------------[  NS Slab Tests  ]-----------------\n");
 
-	printf("Testing ps_ns slab allocation: objmem %lu (ns objmemsz %lu), sz = nobj %lu * %d\n",
+	printf("Testing ps_ns slab allocation: objmem %zu (ns objmemsz %lu), sz = nobj %zu * %d\n",
 	       ps_slab_objmem_nstest(), __ps_slab_objmemsz(sizeof(void*)),
 	       ps_slab_nobjs_nstest(), 1<<LEAF_ORDER);
 
@@ -72,7 +72,7 @@ test_smr_alloc_lkup(void)
 
 	printf("--------------------[  NS Tests  ]-----------------\n");
 
-	printf("Testing ps_ns allocation: objmem %lu (ns objmemsz %lu), sz = nobj %lu * %d\n",
+	printf("Testing ps_ns allocation: objmem %zu (ns objmemsz %lu), sz = nobj %zu * %d\n",
 	       ps_slab_objmem_nstest2(), __ps_slab_objmemsz(sizeof(void*)),
 	       ps_slab_nobjs_nstest2(), 1<<LEAF_ORDER);
 

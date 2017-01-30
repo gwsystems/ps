@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <sys/mman.h>
 #include <stdlib.h>
+#include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -34,13 +35,22 @@ typedef u16_t localityid_t;
 #define PS_ALIGNED     __attribute__((aligned(PS_CACHE_LINE)))
 #define PS_WORDALIGNED __attribute__((aligned(PS_WORD)))
 #ifndef PS_NUMCORES
-#define PS_NUMCORES      10
+#define PS_NUMCORES      4
 #endif
 #ifndef PS_NUMLOCALITIES
-#define PS_NUMLOCALITIES 2
+#define PS_NUMLOCALITIES 1
 #endif
 #define PS_PAGE_SIZE   4096
 #define PS_RNDUP(v, a) (-(-(v) & -(a))) /* from blogs.oracle.com/jwadams/entry/macros_and_powers_of_two */
+
+#define PS_WORDSIZE 32
+#if PS_WORDSIZE == 32  /* x86-32 */
+#define PS_PLAT_SHIFTR32(v)
+#define PS_ATOMIC_POSTFIX "l"
+#else /* x86-64 */
+#define PS_PLAT_SHIFTR32(v) (v |= v >> 32)
+#define PS_ATOMIC_POSTFIX "q"
+#endif
 
 /*
  * How frequently do we check remote free lists when we make an
@@ -63,11 +73,10 @@ static inline void *
 ps_plat_alloc(size_t sz, coreid_t coreid)
 {
 	void *m;
-	int ret;
 	(void)coreid;
 
-	ret = posix_memalign(&m, PS_PAGE_SIZE, sz);
-	assert(!ret);
+	m = aligned_alloc(PS_PAGE_SIZE, sz);
+	assert(m);
 	memset(m, 0, sz);
 
 	return m;
@@ -99,7 +108,7 @@ ps_rndpow2(unsigned long v)
 	v |= v >> 4;
 	v |= v >> 8;
 	v |= v >> 16;
-	if (sizeof(long) == 8) v |= v >> 32; /* 64 bit systems */
+	PS_PLAT_SHIFTR32(v);
 	v++;
 
 	return v;
@@ -147,8 +156,6 @@ ps_coreid(void)
 	return coreid;
 }
 
-#define PS_ATOMIC_POSTFIX "q" /* x86-64 */
-/* #define PS_ATOMIC_POSTFIX "l" */ /* x86-32 */
 #define PS_CAS_INSTRUCTION "cmpxchg"
 #define PS_FAA_INSTRUCTION "xadd"
 #define PS_CAS_STR PS_CAS_INSTRUCTION PS_ATOMIC_POSTFIX " %2, %0; setz %1"

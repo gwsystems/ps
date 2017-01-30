@@ -219,7 +219,7 @@ stats_print(struct ps_mem *m)
 	printf("Stats for slab @ %p\n", (void*)m);
 	ps_slabptr_stats(m, &s);
 	for (i = 0 ; i < PS_NUMCORES ; i++) {
-		printf("\tcore %d, slabs %ld, partial slabs %ld, nfree %ld, nremote %ld\n",
+		printf("\tcore %d, slabs %zd, partial slabs %zd, nfree %zd, nremote %zd\n",
 		       i, s.percore[i].nslabs, s.percore[i].npartslabs, s.percore[i].nfree, s.percore[i].nremote);
 	}
 }
