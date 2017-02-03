@@ -1,6 +1,7 @@
 # Building and testing
 
 ```
+$ ./configure linux x86
 $ make
 ```
 
@@ -14,6 +15,7 @@ $ make clean
 Testing:
 
 ```
+$ ./configure linux x86
 $ make tests
 $ cd tests/
 $ ./list.test
