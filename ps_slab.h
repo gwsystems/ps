@@ -12,6 +12,7 @@
 #ifndef  PS_SLAB_H
 #define  PS_SLAB_H
 
+#include <ps_config.h>
 #include <ps_list.h>
 #include <ps_plat.h>
 #include <ps_global.h>

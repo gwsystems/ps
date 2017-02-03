@@ -25,6 +25,7 @@
 #ifndef PS_SMR_H
 #define PS_SMR_H
 
+#include <ps_config.h>
 #include <ps_global.h>
 #include <ps_slab.h>
 

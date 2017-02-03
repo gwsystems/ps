@@ -31,3 +31,14 @@
 # Debug files
 *.dSYM/
 *.su
+
+# build system oddities
+ps_plat.h
+*.d
+*.test
+
+# indexing
+GPATH
+GRTAGS
+GSYMS
+GTAGS

@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 #include <ps_ns.h>
-#include <ps_plat_linux.h>
+#include <ps_plat.h>
 
 /*
  * FIXME:

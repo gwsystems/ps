@@ -191,4 +191,28 @@ struct ps_mem {
 typedef void            (*ps_free_fn_t)(struct ps_mem *m, struct ps_slab *s, size_t sz, coreid_t curr);
 typedef struct ps_slab *(*ps_alloc_fn_t)(struct ps_mem *m, size_t sz, coreid_t curr);
 
+/*
+ * Round up to the nearest power of 2.
+ *
+ * Value "v" must be an unsigned type the size of a word (e.g. unsigned long).
+ *
+ * from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2Float
+ */
+static inline unsigned long
+ps_rndpow2(unsigned long v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	PS_PLAT_SHIFTR32(v);
+	v++;
+
+	return v;
+}
+
+#define EQUIESCENCE (200)
+
 #endif	/* PS_GLOBAL_H */

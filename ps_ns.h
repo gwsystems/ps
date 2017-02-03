@@ -18,6 +18,7 @@
  * ertrie.
  */
 
+#include <ps_config.h>
 #include <ps_smr.h>
 #include <errno.h>
 #include <ertrie.h>
