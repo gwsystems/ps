@@ -26,7 +26,7 @@ $ ...repeat with each *.test executable...
 # Organization
 
 - `ps_config.h` includes some configuration variables...edit this directly for your system.
-- `Makefile.config` includes two variables that control your OS and architecture.  These variables must exactly match a pair of directories in `plat/os/` and `plat/arch/`.
+- `Makefile.config` is an auto-generated file (with `configure`) includes two variables that control your OS and architecture.  These variables must exactly match a pair of directories in `plat/os/` and `plat/arch/`.
 - `libps.a` is the output of the library compilation.  Including this in your `-L` path, and including this directory in `-I` will enable you to use the library.
 - `README.md` and `TODO.md` ...take a wild guess ;-)
 - `plat/` is the platform directory including both architecture-specific, and OS-specific functions.
