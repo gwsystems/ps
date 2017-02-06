@@ -21,7 +21,7 @@
 #include <ps_config.h>
 #include <ps_smr.h>
 #include <errno.h>
-#include <ertrie.h>
+#include <ps_ertrie.h>
 
 /* Just namespace encapsulation... */
 struct ps_ns {
