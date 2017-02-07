@@ -213,6 +213,8 @@ ps_rndpow2(unsigned long v)
 	return v;
 }
 
+#ifndef EQUIESCENCE
 #define EQUIESCENCE (200)
+#endif
 
 #endif	/* PS_GLOBAL_H */

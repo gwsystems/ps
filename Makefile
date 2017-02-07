@@ -14,8 +14,7 @@ all: $(CLIB)
 
 config:
 	@rm -f $(PLATFILE)
-	@touch $(PLATFILE)
-	@echo '#ifndef PS_PLAT_H'                          >> $(PLATFILE)
+	@echo '#ifndef PS_PLAT_H'                          >  $(PLATFILE)
 	@echo '#define PS_PLAT_H'                          >> $(PLATFILE)
 	@echo '#include "plat/arch/$(ARCHNAME)/ps_arch.h"' >> $(PLATFILE)
 	@echo '#include "plat/os/$(OSNAME)/ps_os.h"'       >> $(PLATFILE)
@@ -24,7 +23,7 @@ config:
 $(PLATFILE): config
 
 %.o:%.c
-	$(CC) $(CINC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(CLIB):$(PLATFILE) $(COBJS)
 	$(AR) cr $@ $^

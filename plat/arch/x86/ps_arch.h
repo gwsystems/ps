@@ -15,9 +15,9 @@
 
 #include <ps_config.h>
 
-#define u16_t unsigned short int
-#define u32_t unsigned int
-#define u64_t unsigned long long
+typedef unsigned short int u16_t;
+typedef unsigned int u32_t;
+typedef unsigned long long u64_t;
 typedef u64_t ps_tsc_t; 	/* our time-stamp counter representation */
 typedef u16_t coreid_t;
 typedef u16_t localityid_t;

@@ -11,6 +11,10 @@
 #include <ps_config.h>
 #include <ps_plat.h>
 
+#include <stdlib.h>
+#include <cos_debug.h>
+#include <string.h>
+
 /* Default allocation and deallocation functions */
 static inline void *
 ps_plat_alloc(size_t sz, coreid_t coreid)
