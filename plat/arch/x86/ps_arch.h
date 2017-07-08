@@ -87,6 +87,8 @@ static inline void
 ps_mem_fence(void)
 { __asm__ __volatile__("mfence" ::: "memory"); }
 
+#define ps_load(addr) (*(volatile __typeof__(*addr) *)(addr))
+
 /*
  * Only atomic on a uni-processor, so not for cross-core coordination.
  * Faster on a multiprocessor when used to synchronize between threads
