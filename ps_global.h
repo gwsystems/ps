@@ -107,10 +107,32 @@ __ps_qsc_clear(struct ps_qsc_list *l)
 }
 
 struct ps_slab_remote_list {
-	struct ps_lock     lock;
-	struct ps_qsc_list remote_frees;
-	size_t             nfree;
+	struct ps_mheader *remote_frees;
 } PS_ALIGNED;
+
+static inline void
+__ps_rfl_stack_push(struct ps_mheader **h, struct ps_mheader *n)
+{
+	struct ps_mheader *t;
+
+	do {
+		t       = *h;
+		n->next = t;
+	} while(!ps_cas((unsigned long *)h, (unsigned long)t, (unsigned long)n));
+}
+
+static inline struct ps_mheader *
+__ps_rfl_stack_clear(struct ps_mheader **h)
+{
+	struct ps_mheader *t;
+
+
+	do {
+		t = *h;
+	} while(!ps_cas((unsigned long *)h, (unsigned long)t, (unsigned long)NULL));
+
+	return t;
+}
 
 struct ps_slab_info {
 	struct ps_slab_freelist fl;	      /* freelist of slabs with available objects */
