@@ -10,6 +10,7 @@
 
 #include <ps_plat.h>
 
+#define NUM_REMOTE_LIST (PS_CACHE_LINE/sizeof(struct ps_mheader *))
 typedef unsigned long ps_desc_t;
 
 /*
@@ -107,8 +108,9 @@ __ps_qsc_clear(struct ps_qsc_list *l)
 }
 
 struct ps_slab_remote_list {
-	struct ps_mheader *remote_frees;
-} PS_ALIGNED;
+	struct ps_mheader *remote_frees[NUM_REMOTE_LIST];
+	char padding[PS_CACHE_PAD - (sizeof(struct ps_mheader *) * NUM_REMOTE_LIST)%PS_CACHE_PAD];
+} PS_PACKED PS_ALIGNED;
 
 static inline void
 __ps_rfl_stack_push(struct ps_mheader **h, struct ps_mheader *n)

@@ -97,7 +97,7 @@ ps_slabptr_init(struct ps_mem *m)
 void
 ps_slabptr_stats(struct ps_mem *m, struct ps_slab_stats *stats)
 {
-	int i, j;
+	int i, j, k;
 	struct ps_slab *s;
 	struct ps_mem_percore *pc;
 
@@ -115,7 +115,9 @@ ps_slabptr_stats(struct ps_mem *m, struct ps_slab_stats *stats)
 		} while (s != pc->slab_info.fl.list);
 
 		for (j = 0 ; j < PS_NUMLOCALITIES ; j++) {
-			stats->percore[i].nremote += __ps_remote_free_cnt(pc->slab_remote[j].remote_frees);
+			for (k = 0 ; k < PS_NUMLOCALITIES ; k++) {
+				stats->percore[i].nremote += __ps_remote_free_cnt(pc->slab_remote[j].remote_frees[k]);
+			}
 		}
 	}
 }
@@ -123,14 +125,16 @@ ps_slabptr_stats(struct ps_mem *m, struct ps_slab_stats *stats)
 int
 ps_slabptr_isempty(struct ps_mem *m)
 {
-	int i, j;
+	int i, j, k;
 	struct ps_mem_percore *pc;
 
 	for (i = 0 ; i < PS_NUMCORES ; i++) {
 		pc = &m->percore[i];
 		if (pc->slab_info.nslabs) return 0;
 		for (j = 0 ; j < PS_NUMLOCALITIES ; j++) {
-			if (__ps_remote_free_cnt(pc->slab_remote[j].remote_frees)) return 0;
+			for (k = 0 ; k < PS_NUMLOCALITIES ; k++) {
+				if (__ps_remote_free_cnt(pc->slab_remote[j].remote_frees[k])) return 0;
+			}
 		}
 	}
 	return 1;
@@ -146,24 +150,27 @@ __ps_slab_mem_remote_free(struct ps_mem *mem, struct ps_mheader *h, coreid_t cor
 	ps_tsc_locality(&tmpcoreid, &numaid);
 	r = &mem->percore[core_target].slab_remote[numaid];
 
-	__ps_rfl_stack_push(&(r->remote_frees), h);
+	__ps_rfl_stack_push(&(r->remote_frees[tmpcoreid % NUM_REMOTE_LIST]), h);
 }
 
 static inline int
 __ps_slab_mem_remote_clear(struct ps_mem *mem, int locality, PS_SLAB_PARAMS)
 {
 	int ret = 0;
+	unsigned int i;
 	struct ps_mheader *h, *n;
 	struct ps_slab_remote_list *r = &mem->percore[coreid].slab_remote[locality];
 
-	h = r->remote_frees;
-	if (h) h = __ps_rfl_stack_clear(&(r->remote_frees));
-	while (h) {
-		n       = h->next;
-		h->next = NULL;
-		__ps_slab_mem_free(__ps_mhead_mem(h), mem, PS_SLAB_ARGS);
-		h       = n;
-		ret    += 1;
+	for (i = 0 ; i < NUM_REMOTE_LIST ; i++) {
+		h = r->remote_frees[i];
+		if (h) h = __ps_rfl_stack_clear(&(r->remote_frees[i]));
+		while (h) {
+			n       = h->next;
+			h->next = NULL;
+			__ps_slab_mem_free(__ps_mhead_mem(h), mem, PS_SLAB_ARGS);
+			h       = n;
+			ret    += 1;
+		}
 	}
 	return ret;
 }
