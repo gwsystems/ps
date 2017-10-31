@@ -36,7 +36,7 @@
 struct ps_quiescence_timing {
 	volatile ps_tsc_t     time_in, time_out;
 	volatile ps_tsc_t     last_known_quiescence;
-	char __padding[PS_CACHE_PAD - 3*sizeof(ps_tsc_t)];
+	char __padding[PS_CACHE_PAD_SZ(3*sizeof(ps_tsc_t))];
 } PS_ALIGNED PS_PACKED;
 
 struct __ps_other_core {
@@ -49,7 +49,7 @@ struct ps_smr_percore {
 	/* ps_quiescence_timing info of other CPUs known by this CPU */
 	struct __ps_other_core timing_others[PS_NUMCORES];
 	/* padding an additional cacheline for prefetching */
-	char __padding[PS_CACHE_PAD - (((sizeof(struct __ps_other_core)*PS_NUMCORES)+sizeof(struct ps_quiescence_timing)) % PS_CACHE_LINE)];
+	char __padding[PS_CACHE_PAD_SZ(sizeof(struct __ps_other_core)*PS_NUMCORES + sizeof(struct ps_quiescence_timing))];
 } PS_ALIGNED PS_PACKED;
 
 struct parsec {

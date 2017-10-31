@@ -109,7 +109,7 @@ __ps_qsc_clear(struct ps_qsc_list *l)
 
 struct ps_slab_remote_list {
 	struct ps_mheader *remote_frees[NUM_REMOTE_LIST];
-	char padding[PS_CACHE_PAD - (sizeof(struct ps_mheader *) * NUM_REMOTE_LIST)%PS_CACHE_PAD];
+	char padding[PS_CACHE_PAD_SZ(sizeof(struct ps_mheader *) * NUM_REMOTE_LIST)];
 } PS_PACKED PS_ALIGNED;
 
 static inline void
@@ -162,12 +162,12 @@ struct ps_ns_info {
 
 	size_t desc_range; 	/* num descriptors per slab */
 	ps_desc_t desc_max;
-	char  padding[PS_CACHE_PAD-(3*sizeof(void *)+2*sizeof(size_t)+sizeof(ps_desc_t))%PS_CACHE_PAD];
+	char  padding[PS_CACHE_PAD_SZ(3*sizeof(void *) + 2*sizeof(size_t) + sizeof(ps_desc_t))];
 
 	struct ps_lock lock;
 	struct ps_slab_freelist fl;
 	ps_desc_t frontier;
-	char  padding2[PS_CACHE_PAD-(sizeof(struct ps_lock) + sizeof(ps_desc_t) + sizeof(struct ps_slab_freelist))];
+	char  padding2[PS_CACHE_PAD_SZ(sizeof(struct ps_lock) + sizeof(ps_desc_t) + sizeof(struct ps_slab_freelist))];
 } PS_PACKED PS_ALIGNED;
 
 /*
@@ -190,7 +190,7 @@ struct ps_mem_percore {
 	struct ps_slab_info slab_info;
 	struct ps_smr_info  smr_info;
 
-	char padding[PS_CACHE_PAD-((sizeof(struct ps_slab_info) + sizeof(struct ps_smr_info))%PS_CACHE_PAD)];
+	char padding[PS_CACHE_PAD_SZ(sizeof(struct ps_slab_info) + sizeof(struct ps_smr_info))];
 
 	/*
 	 * Isolate the contended cache-lines from the common-case
