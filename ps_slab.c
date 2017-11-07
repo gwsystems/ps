@@ -124,7 +124,7 @@ ps_slabptr_isempty(struct ps_mem *m)
 
 		for (j = 0 ; j < PS_NUMLOCALITIES ; j++) {
 			for (k = 0 ; k < PS_NUMLOCALITIES ; k++) {
-				if (__ps_remote_free_cnt(pc->slab_remote[j].remote_frees[k])) return 0;
+				if (pc->slab_remote[j].remote_frees[k]) return 0;
 			}
 		}
 	}
