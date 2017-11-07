@@ -79,17 +79,9 @@ __ps_remote_free_cnt(struct ps_mheader *h)
 void
 ps_slabptr_init(struct ps_mem *m)
 {
-	int i;
-
+	/* ns_info, slab_info and smr_info are all inlined into struct ps_mem, */
+	/* see ps_global.h. So this single memset initializes everything.*/
 	memset(m, 0, sizeof(struct ps_mem));
-
-	for (i = 0 ; i < PS_NUMCORES ; i++) {
-		struct ps_slab_info *si = &m->percore[i].slab_info;
-
-		si->fl.list      = NULL;
-		si->salloccnt    = 0;
-		si->remote_token = 0;
-	}
 }
 
 void
