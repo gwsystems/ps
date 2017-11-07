@@ -124,10 +124,9 @@ __ps_rfl_stack_push(struct ps_mheader **h, struct ps_mheader *n)
 }
 
 static inline struct ps_mheader *
-__ps_rfl_stack_clear(struct ps_mheader **h)
+__ps_rfl_stack_remove_all(struct ps_mheader **h)
 {
 	struct ps_mheader *t;
-
 
 	do {
 		t = *h;

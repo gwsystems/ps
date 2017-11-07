@@ -68,13 +68,11 @@ __ps_slab_init(struct ps_slab *s, struct ps_slab_info *si, PS_SLAB_PARAMS)
 int
 __ps_remote_free_cnt(struct ps_mheader *h)
 {
-	struct ps_mheader *t = h;
+	struct ps_mheader *t;
 	int ret = 0;
 
-	while (t) {
-		ret++;
-		t = t->next;
-	}
+	for (t = h; t; t = t->next, ret++) ;
+
 	return ret;
 }
 
@@ -131,6 +129,7 @@ ps_slabptr_isempty(struct ps_mem *m)
 	for (i = 0 ; i < PS_NUMCORES ; i++) {
 		pc = &m->percore[i];
 		if (pc->slab_info.nslabs) return 0;
+
 		for (j = 0 ; j < PS_NUMLOCALITIES ; j++) {
 			for (k = 0 ; k < PS_NUMLOCALITIES ; k++) {
 				if (__ps_remote_free_cnt(pc->slab_remote[j].remote_frees[k])) return 0;
@@ -163,7 +162,7 @@ __ps_slab_mem_remote_clear(struct ps_mem *mem, int locality, PS_SLAB_PARAMS)
 
 	for (i = 0 ; i < NUM_REMOTE_LIST ; i++) {
 		h = r->remote_frees[i];
-		if (h) h = __ps_rfl_stack_clear(&(r->remote_frees[i]));
+		if (h) h = __ps_rfl_stack_remove_all(&(r->remote_frees[i]));
 		while (h) {
 			n       = h->next;
 			h->next = NULL;
@@ -172,6 +171,7 @@ __ps_slab_mem_remote_clear(struct ps_mem *mem, int locality, PS_SLAB_PARAMS)
 			ret    += 1;
 		}
 	}
+
 	return ret;
 }
 

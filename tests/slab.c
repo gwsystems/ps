@@ -58,7 +58,6 @@ struct larger *l[ITER];
 
 #define FREE_BATCH 64
 #define RB_SZ   ((PS_NUMCORES-1)*FREE_BATCH)
-//#define RB_SZ   (1024 * 32)
 #define RB_ITER (RB_SZ * 1024)
 
 void * volatile ring_buffer[RB_SZ] PS_ALIGNED;
@@ -147,23 +146,16 @@ test_remote_frees(void)
 	printf("Remote allocations take %lld, remote frees %lld (unadjusted for tsc)\n", alloc_tsc, free_tsc);
 }
 
-#define PRINTER_ID 2
-#define RF_ITER       (100000)
+#define STATS_REPORT_THD 2
+#define REMOTE_FREE_ITER (100000)
 
-unsigned long cost[RF_ITER] PS_ALIGNED;
-unsigned long alloc[RF_ITER] PS_ALIGNED;
+unsigned long cost[REMOTE_FREE_ITER]  PS_ALIGNED;
+unsigned long alloc[REMOTE_FREE_ITER] PS_ALIGNED;
 __thread int thd_local_id;
 
 static inline int
 cmpfunc(const void * a, const void * b)
-{
-	unsigned long aa, bb;
-	aa = *(unsigned long*)a;
-	bb = *(unsigned long*)b;
-	if (bb > aa) return 1;
-	if (bb < aa) return -1;
-	return 0;
-}
+{ return (*(unsigned long*)a) - (*(unsigned long*)b); }
 
 static inline void
 out_latency(unsigned long *re, int num, char *label)
@@ -194,6 +186,7 @@ c_begin:
 		while (!ring_buffer[i]) ;
 		s = (char *)ring_buffer[i];
 		if (s == (void *)-1) goto c_end;
+
 		ring_buffer[i] = NULL;
 		assert(i == ((int *)s)[0]);
 		h = s-sizeof(struct ps_mheader);
@@ -203,12 +196,12 @@ c_begin:
 		start = ps_tsc();
 		ps_slab_free_s(s);
 		end = ps_tsc();
-		if (id == PRINTER_ID && k < RF_ITER) cost[k++] = end-start;
+		if (id == STATS_REPORT_THD && k < REMOTE_FREE_ITER) cost[k++] = end-start;
 	}
 	goto c_begin;
 
 c_end:
-	if (id == PRINTER_ID) out_latency(cost, k, "remote_free");
+	if (id == STATS_REPORT_THD) out_latency(cost, k, "remote_free");
 	meas_barrier(PS_NUMCORES);
 }
 
@@ -228,18 +221,19 @@ p_begin:
 		s = ps_slab_alloc_s();
 		end = ps_tsc();
 		assert(s);
+
 		((int *)s)[0] = i;
 		ps_mem_fence();
 		ring_buffer[i] = s;
-		if (k < RF_ITER) alloc[k] = end-start;
-		if ((++k) == (PS_NUMCORES-1)*RF_ITER) goto p_end;
+		if (k < REMOTE_FREE_ITER) alloc[k] = end-start;
+		if ((++k) == (PS_NUMCORES-1)*REMOTE_FREE_ITER) goto p_end;
 	}
 	b = (b+1) % FREE_BATCH;
 	goto p_begin;
 
 p_end:
 	for(i=0; i<RB_SZ; i++) ring_buffer[i] = (void *)-1;
-	out_latency(alloc, RF_ITER, "alloc");
+	out_latency(alloc, REMOTE_FREE_ITER, "alloc");
 	meas_barrier(PS_NUMCORES);
 }
 
