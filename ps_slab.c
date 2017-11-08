@@ -61,33 +61,33 @@ __ps_slab_init(struct ps_slab *s, struct ps_slab_info *si, PS_SLAB_PARAMS)
 	__ps_slab_freelist_check(&si->fl);
 }
 
+/*
+ * This is not thread-safe. It may lost some concurrent remote freed
+ * objects. So use it only for approximate accounting or debugging.
+ */
+int
+__ps_remote_free_cnt(struct ps_mheader *h)
+{
+	struct ps_mheader *t;
+	int ret = 0;
+
+	for (t = h; t; t = t->next, ret++) ;
+
+	return ret;
+}
+
 void
 ps_slabptr_init(struct ps_mem *m)
 {
-	int i;
-
+	/* ns_info, slab_info and smr_info are all inlined into struct ps_mem, */
+	/* see ps_global.h. So this single memset initializes everything.*/
 	memset(m, 0, sizeof(struct ps_mem));
-
-	for (i = 0 ; i < PS_NUMCORES ; i++) {
-		struct ps_slab_remote_list *l;
-		struct ps_slab_info *si = &m->percore[i].slab_info;
-		int j;
-
-		si->fl.list      = NULL;
-		si->salloccnt    = 0;
-		si->remote_token = 0;
-		for (j = 0 ; j < PS_NUMLOCALITIES ; j++) {
-			l = &m->percore[i].slab_remote[j];
-			ps_lock_init(&l->lock);
-			__ps_qsc_clear(&l->remote_frees);
-		}
-	}
 }
 
 void
 ps_slabptr_stats(struct ps_mem *m, struct ps_slab_stats *stats)
 {
-	int i, j;
+	int i, j, k;
 	struct ps_slab *s;
 	struct ps_mem_percore *pc;
 
@@ -105,7 +105,9 @@ ps_slabptr_stats(struct ps_mem *m, struct ps_slab_stats *stats)
 		} while (s != pc->slab_info.fl.list);
 
 		for (j = 0 ; j < PS_NUMLOCALITIES ; j++) {
-			stats->percore[i].nremote += pc->slab_remote[j].nfree;
+			for (k = 0 ; k < PS_NUMLOCALITIES ; k++) {
+				stats->percore[i].nremote += __ps_remote_free_cnt(pc->slab_remote[j].remote_frees[k]);
+			}
 		}
 	}
 }
@@ -113,17 +115,21 @@ ps_slabptr_stats(struct ps_mem *m, struct ps_slab_stats *stats)
 int
 ps_slabptr_isempty(struct ps_mem *m)
 {
-	int i, j;
+	int i, j, k;
+	struct ps_mem_percore *pc;
 
 	for (i = 0 ; i < PS_NUMCORES ; i++) {
-		if (m->percore[i].slab_info.nslabs) return 0;
+		pc = &m->percore[i];
+		if (pc->slab_info.nslabs) return 0;
+
 		for (j = 0 ; j < PS_NUMLOCALITIES ; j++) {
-			if (m->percore[i].slab_remote[j].nfree) return 0;
+			for (k = 0 ; k < PS_NUMLOCALITIES ; k++) {
+				if (pc->slab_remote[j].remote_frees[k]) return 0;
+			}
 		}
 	}
 	return 1;
 }
-
 
 void
 __ps_slab_mem_remote_free(struct ps_mem *mem, struct ps_mheader *h, coreid_t core_target)
@@ -135,10 +141,30 @@ __ps_slab_mem_remote_free(struct ps_mem *mem, struct ps_mheader *h, coreid_t cor
 	ps_tsc_locality(&tmpcoreid, &numaid);
 	r = &mem->percore[core_target].slab_remote[numaid];
 
-	ps_lock_take(&r->lock);
-	__ps_qsc_enqueue(&r->remote_frees, h);
-	r->nfree++;
-	ps_lock_release(&r->lock);
+	__ps_rfl_stack_push(&(r->remote_frees[tmpcoreid % NUM_REMOTE_LIST]), h);
+}
+
+static inline int
+__ps_slab_mem_remote_clear(struct ps_mem *mem, int locality, PS_SLAB_PARAMS)
+{
+	int ret = 0;
+	unsigned int i;
+	struct ps_mheader *h, *n;
+	struct ps_slab_remote_list *r = &mem->percore[coreid].slab_remote[locality];
+
+	for (i = 0 ; i < NUM_REMOTE_LIST ; i++) {
+		h = r->remote_frees[i];
+		if (h) h = __ps_rfl_stack_remove_all(&(r->remote_frees[i]));
+		while (h) {
+			n       = h->next;
+			h->next = NULL;
+			__ps_slab_mem_free(__ps_mhead_mem(h), mem, PS_SLAB_ARGS);
+			h       = n;
+			ret    += 1;
+		}
+	}
+
+	return ret;
 }
 
 /*
@@ -152,26 +178,14 @@ __ps_slab_mem_remote_free(struct ps_mem *mem, struct ps_mheader *h, coreid_t cor
 void
 __ps_slab_mem_remote_process(struct ps_mem *mem, struct ps_slab_info *si, PS_SLAB_PARAMS)
 {
-	struct ps_mheader *h, *n;
+	int ret;
 	unsigned long locality = si->remote_token;
 	PS_SLAB_DEWARN;
 
 	do {
-		struct ps_slab_remote_list *r = &mem->percore[coreid].slab_remote[locality];
-
-		ps_lock_take(&r->lock);
-		h        = __ps_qsc_clear(&r->remote_frees);
-		r->nfree = 0;
-		ps_lock_release(&r->lock);
+		ret = __ps_slab_mem_remote_clear(mem, locality, PS_SLAB_ARGS);
 		locality = (locality + 1) % PS_NUMLOCALITIES;
-	} while (!h && locality != si->remote_token);
+	} while (!ret && locality != si->remote_token);
 
 	si->remote_token = locality;
-
-	while (h) {
-		n       = h->next;
-		h->next = NULL;
-		__ps_slab_mem_free(__ps_mhead_mem(h), mem, PS_SLAB_ARGS);
-		h       = n;
-	}
 }

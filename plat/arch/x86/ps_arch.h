@@ -29,14 +29,15 @@ typedef u16_t localityid_t;
 #define unlikely(x)    __builtin_expect(!!(x), 0)
 #endif
 
-#define PS_CACHE_LINE  64
-#define PS_CACHE_PAD   (PS_CACHE_LINE*2)
-#define PS_WORD        sizeof(long)
-#define PS_PACKED      __attribute__((packed))
-#define PS_ALIGNED     __attribute__((aligned(PS_CACHE_LINE)))
-#define PS_WORDALIGNED __attribute__((aligned(PS_WORD)))
-#define PS_PAGE_SIZE   4096
-#define PS_RNDUP(v, a) (-(-(v) & -(a))) /* from blogs.oracle.com/jwadams/entry/macros_and_powers_of_two */
+#define PS_CACHE_LINE       64
+#define PS_CACHE_PAD        (PS_CACHE_LINE*2)
+#define PS_CACHE_PAD_SZ(sz) (PS_CACHE_PAD - ((sz) % PS_CACHE_PAD))
+#define PS_WORD             sizeof(long)
+#define PS_PACKED           __attribute__((packed))
+#define PS_ALIGNED          __attribute__((aligned(PS_CACHE_LINE)))
+#define PS_WORDALIGNED      __attribute__((aligned(PS_WORD)))
+#define PS_PAGE_SIZE        4096
+#define PS_RNDUP(v, a)      (-(-(v) & -(a))) /* from blogs.oracle.com/jwadams/entry/macros_and_powers_of_two */
 
 #ifndef PS_WORDSIZE
 #define PS_WORDSIZE 32
