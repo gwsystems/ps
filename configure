@@ -7,4 +7,5 @@ if [ $# -ne 2 ]; then
 else
     echo "OSNAME   = $1" > Makefile.config
     echo "ARCHNAME = $2" >> Makefile.config
+    echo "WORDSIZE = $(getconf LONG_BIT)" >> Makefile.config
 fi

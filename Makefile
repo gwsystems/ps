@@ -16,6 +16,7 @@ config:
 	@rm -f $(PLATFILE)
 	@echo '#ifndef PS_PLAT_H'                          >  $(PLATFILE)
 	@echo '#define PS_PLAT_H'                          >> $(PLATFILE)
+	@echo '#define PS_WORDSIZE $(WORDSIZE)'            >> $(PLATFILE)
 	@echo '#include "plat/arch/$(ARCHNAME)/ps_arch.h"' >> $(PLATFILE)
 	@echo '#include "plat/os/$(OSNAME)/ps_os.h"'       >> $(PLATFILE)
 	@echo '#endif	/* PS_PLAT_H */'                   >> $(PLATFILE)

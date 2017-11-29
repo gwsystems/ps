@@ -39,9 +39,6 @@ typedef u16_t localityid_t;
 #define PS_PAGE_SIZE        4096
 #define PS_RNDUP(v, a)      (-(-(v) & -(a))) /* from blogs.oracle.com/jwadams/entry/macros_and_powers_of_two */
 
-#ifndef PS_WORDSIZE
-#define PS_WORDSIZE 32
-#endif
 #if PS_WORDSIZE == 32  /* x86-32 */
 #define PS_PLAT_SHIFTR32(v)
 #define PS_ATOMIC_POSTFIX "l"
