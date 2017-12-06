@@ -3,7 +3,7 @@
 if [ $# -ne 2 ]; then
     echo "Usage: $0 osname archname"
     echo "\tosname is in {linux, cos}"
-    echo "\tarchname is in {x86}"
+    echo "\tarchname is in {x86, x86_64}"
 else
     echo "OSNAME   = $1" > Makefile.config
     echo "ARCHNAME = $2" >> Makefile.config

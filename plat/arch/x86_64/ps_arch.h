@@ -15,8 +15,8 @@
 
 #include <ps_config.h>
 
-#define PS_PLAT_SHIFTR32(v)
-#define PS_ATOMIC_POSTFIX "l"
+#define PS_PLAT_SHIFTR32(v) (v |= v >> 32)
+#define PS_ATOMIC_POSTFIX "q"
 
 #include "ps_arch_x86_common.h"
 

@@ -40,14 +40,4 @@
 #define PS_NUMLOCALITIES 1
 #endif
 
-/*
- * Realistically, the architecture-specific code will often be generic
- * across word sizes (or use ifdefs to abstract that detail away).
- * Thus, I'm putting this in the config file, and it can be
- * over-ridden by `Makefile` `-D` flags.
- */
-#ifndef PS_WORDSIZE
-#define PS_WORDSIZE 32
-#endif
-
 #endif	/* PS_CONFIG_H */
