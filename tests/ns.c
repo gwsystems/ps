@@ -61,6 +61,28 @@ test_slab_alloc_lkup(void)
 
 PS_NS_CREATE(nstest2, sizeof(void *), 3, 9, LEAF_ORDER)
 
+/* #define REAL_TIME_PARSEC_TEST */
+#ifdef REAL_TIME_PARSEC_TEST
+ps_tsc_t _ps_period = 10000;
+__thread ps_tsc_t _ps_deadline = 0;
+
+static void
+ps_period_quiesce(struct ps_ns *ns)
+{
+	ps_tsc_t tsc;
+
+	tsc = ps_tsc();
+	if (tsc >= _ps_deadline) {
+		_ps_deadline = tsc + _ps_period;
+		ps_memptr_quiesce_nstest2(&ns->m);
+	}
+}
+#else
+static void 
+ps_period_quiesce(struct ps_ns *ns)
+{ (void)ns; }
+#endif
+
 void
 test_smr_alloc_lkup(void)
 {
@@ -78,9 +100,11 @@ test_smr_alloc_lkup(void)
 
 	for (i = 0 ; i < SMRITER/2 ; i++)         assert((ds[i] = ps_nsptr_alloc_nstest2(ns, &descs[i])));
 	for (i = 0 ; i < SMRITER/4 ; i++)         ps_nsptr_free_nstest2(ns, ds[i]);
+	ps_period_quiesce(ns);
 	for (i = 0 ; i < SMRITER/4 ; i++)         assert((ds[i] = ps_nsptr_alloc_nstest2(ns, &descs[i])));
 	for (i = SMRITER/2 ; i < SMRITER ; i++)   assert((ds[i] = ps_nsptr_alloc_nstest2(ns, &descs[i])));
 	for (i = 0 ; i < SMRITER ; i++)           ps_nsptr_free_nstest2(ns, ds[i]);
+	ps_period_quiesce(ns);
 
 	for (i = 0 ; i < SMRITER ; i++)           assert(!ps_nsptr_lkup_nstest2(ns, descs[i]));
 	for (i = 0 ; i < (1<<LEAF_ORDER)/2 ; i++) assert((ds[i] = ps_nsptr_alloc_nstest2(ns, &descs[i])));
@@ -88,9 +112,11 @@ test_smr_alloc_lkup(void)
 	for (i = (1<<LEAF_ORDER)/2 ;
 	     i < 1<<LEAF_ORDER ; i++)             assert(!ps_nsptr_lkup_nstest2(ns, descs[i]));
 	for (i = 0 ; i < (1<<LEAF_ORDER)/2 ; i++) ps_nsptr_free_nstest2(ns, ds[i]);
+	ps_period_quiesce(ns);
 	for (i = 0 ; i < SMRITER ; i++)           assert((ds[i] = ps_nsptr_alloc_nstest2(ns, &descs[i])));
 	for (i = 0 ; i < SMRITER ; i++)           assert(ps_nsptr_lkup_nstest2(ns, descs[i]) == ds[i]);
 	for (i = 0 ; i < SMRITER ; i++)           ps_nsptr_free_nstest2(ns, ds[i]);
+	ps_period_quiesce(ns);
 
 	printf("--------------------[ NS: SUCCESS ]-----------------\n");
 }
@@ -116,6 +142,7 @@ test_perf(void)
 	for (j = 0 ; j < ITER ; j++) {
 		for (i = 0 ; i < SMRITER ; i++) assert((ds[i] = ps_nsptr_alloc_nstest2(ns, &descs[i])));
 		for (i = 0 ; i < SMRITER ; i++) ps_nsptr_free_nstest2(ns, ds[i]);
+		ps_period_quiesce(ns);
 	}
 	end = ps_tsc();
 	printf("ns alloc+free average %lld\n", (end-start)/(ITER*SMRITER));
@@ -127,6 +154,7 @@ test_perf(void)
 	}
 	end = ps_tsc();
 	for (i = 0 ; i < SMRITER ; i++) ps_nsptr_free_nstest2(ns, ds[i]);
+	ps_period_quiesce(ns);
 	printf("ns lookup average %lld\n", (end-start)/(ITER*SMRITER));
 
 	printf("--------------------[ NS: SUCCESS ]-----------------\n");
