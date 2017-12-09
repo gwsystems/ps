@@ -9,6 +9,7 @@
 #define PS_GLOBAL_H
 
 #include <ps_plat.h>
+#include <ps_quiesce_type.h>
 
 #define NUM_REMOTE_LIST (PS_CACHE_LINE/sizeof(struct ps_mheader *))
 typedef unsigned long ps_desc_t;
@@ -146,8 +147,7 @@ struct parsec;
 struct ps_smr_info {
 	struct parsec     *ps;         /* the parallel section that wraps this memory, or NULL */
 	struct ps_qsc_list qsc_list;   /* queue of freed, but not quiesced memory */
-	size_t             qmemcnt;    /* # of items in the qsc_list */
-	size_t             qmemtarget; /* # of items in qsc_list before we attempt to quiesce */
+	struct ps_qsc_account account;
 };
 
 typedef void *(*ps_lkupan_fn_t)(void *v, unsigned long id, u32_t dlimit, void *accum);

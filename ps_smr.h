@@ -28,40 +28,17 @@
 #include <ps_config.h>
 #include <ps_global.h>
 #include <ps_slab.h>
-
-#ifndef PS_QLIST_BATCH
-#define PS_QLIST_BATCH 128
-#endif
-
-struct ps_quiescence_timing {
-	volatile ps_tsc_t     time_in, time_out;
-	volatile ps_tsc_t     last_known_quiescence;
-	char __padding[PS_CACHE_PAD_SZ(3*sizeof(ps_tsc_t))];
-} PS_ALIGNED PS_PACKED;
-
-struct __ps_other_core {
-	ps_tsc_t time_in, time_out, time_updated;
-};
-
-struct ps_smr_percore {
-	/* ps_quiescence_timing info of this CPU */
-	struct ps_quiescence_timing timing;
-	/* ps_quiescence_timing info of other CPUs known by this CPU */
-	struct __ps_other_core timing_others[PS_NUMCORES];
-	/* padding an additional cacheline for prefetching */
-	char __padding[PS_CACHE_PAD_SZ(sizeof(struct __ps_other_core)*PS_NUMCORES + sizeof(struct ps_quiescence_timing))];
-} PS_ALIGNED PS_PACKED;
+#include <ps_quiesce_type.h>
 
 struct parsec {
 	int refcnt;
 	struct ps_smr_percore timing_info[PS_NUMCORES] PS_ALIGNED;
 } PS_ALIGNED;
 
-int ps_quiesce_wait(struct parsec *p, ps_tsc_t tsc, ps_tsc_t *qsc);
-int ps_try_quiesce (struct parsec *p, ps_tsc_t tsc, ps_tsc_t *qsc);
 void ps_init(struct parsec *ps);
 struct parsec *ps_alloc(void);
 void __ps_smr_reclaim(coreid_t curr, struct ps_qsc_list *ql, struct ps_smr_info *si, struct ps_mem *mem, ps_free_fn_t ffn);
+void __ps_invoke_smr(coreid_t curr, struct ps_qsc_list *ql, struct ps_smr_info *si, struct ps_mem *mem, ps_free_fn_t ffn);
 void __ps_memptr_init(struct ps_mem *m, struct parsec *ps);
 int  __ps_memptr_delete(struct ps_mem *m);
 
@@ -93,8 +70,23 @@ __ps_smr_free(void *buf, struct ps_mem *mem, ps_free_fn_t ffn)
 	 */
 	__ps_mhead_setfree(m, tsc);
 	__ps_qsc_enqueue(ql, m);
-	si->qmemcnt++;
-	if (unlikely(si->qmemcnt >= si->qmemtarget)) __ps_smr_reclaim(curr_core, ql, si, mem, ffn);
+	si->account.qmemcnt++;
+	__ps_invoke_smr(curr_core, ql, si, mem, ffn);
+}
+
+static inline void
+__ps_quiesce(struct ps_mem *mem, ps_free_fn_t ffn)
+{
+	struct ps_smr_info *si;
+	struct ps_qsc_list *ql;
+	coreid_t curr;
+
+	curr = ps_coreid();
+	si  = &mem->percore[curr].smr_info;
+	ql  = &si->qsc_list;
+	__ps_smr_reclaim(curr, ql, si, mem, ffn);
+
+	return;
 }
 
 static inline void
@@ -119,6 +111,10 @@ ps_enter(struct parsec *parsec)
 
 	return;
 }
+
+static inline int
+__ps_in_lib(struct ps_quiescence_timing *timing)
+{ return timing->time_out <= timing->time_in; }
 
 static inline void
 ps_exit(struct parsec *parsec)
@@ -181,6 +177,13 @@ ps_memptr_delete_##name(struct ps_mem *m)							\
 static inline int										\
 ps_mem_delete_##name(void)									\
 { return ps_memptr_delete_##name(&__ps_mem_##name); }						\
+static inline void									        \
+ps_memptr_quiesce_##name(struct ps_mem *m)							\
+{ __ps_quiesce(m, __ps_parslab_free_tramp_##name); }                                            \
+static inline void									        \
+ps_quiesce_##name(void)										\
+{ __ps_quiesce(&__ps_mem_##name, __ps_parslab_free_tramp_##name); }
+
 
 #define PS_PARSLAB_CREATE_AFNS(name, objsz, allocsz, allocfn, freefn)		\
 __PS_PARSLAB_CREATE_AFNS(name, objsz, allocsz, sizeof(struct ps_slab), allocfn, freefn)
