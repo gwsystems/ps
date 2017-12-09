@@ -155,7 +155,7 @@ __thread int thd_local_id;
 
 static inline int
 cmpfunc(const void * a, const void * b)
-{ return (*(unsigned long*)a) - (*(unsigned long*)b); }
+{ return (*(unsigned long*)b) - (*(unsigned long*)a); }
 
 static inline void
 out_latency(unsigned long *re, int num, char *label)

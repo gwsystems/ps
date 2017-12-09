@@ -86,8 +86,8 @@ __ps_memptr_init(struct ps_mem *m, struct parsec *ps)
 	for (i = 0 ; i < PS_NUMCORES ; i++) {
 		__ps_smr_account_init(&pc[i].smr_info);
 		pc[i].smr_info.ps         = ps;
-		ps->refcnt++;
 	}
+	ps->refcnt++;
 }
 
 int
