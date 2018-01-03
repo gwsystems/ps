@@ -8,5 +8,5 @@ if [ $# -ne 3 ]; then
 else
     echo "OSNAME   = $1" > Makefile.config
     echo "ARCHNAME = $2" >> Makefile.config
-    echo "QUISTYPE = $3" >> Makefile.config
+    echo "QUIESCETYPE = $3" >> Makefile.config
 fi

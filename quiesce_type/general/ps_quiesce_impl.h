@@ -1,5 +1,5 @@
-#ifndef PS_QUIESCE_H
-#define PS_QUIESCE_H
+#ifndef PS_QUIESCE_IMPL_H
+#define PS_QUIESCE_IMPL_H
 
 #ifndef PS_QLIST_BATCH
 #define PS_QLIST_BATCH 128
@@ -33,4 +33,4 @@ struct parsec;
 int ps_quiesce_wait(struct parsec *p, ps_tsc_t tsc, ps_tsc_t *qsc);
 int ps_try_quiesce (struct parsec *p, ps_tsc_t tsc, ps_tsc_t *qsc);
 
-#endif	/* PS_QUIESCE_H */
+#endif	/* PS_QUIESCE_IMPL_H */

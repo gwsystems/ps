@@ -28,7 +28,7 @@
 #include <ps_config.h>
 #include <ps_global.h>
 #include <ps_slab.h>
-#include <ps_quiesce_type.h>
+#include <ps_quiesce.h>
 
 struct parsec {
 	int refcnt;

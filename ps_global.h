@@ -9,7 +9,7 @@
 #define PS_GLOBAL_H
 
 #include <ps_plat.h>
-#include <ps_quiesce_type.h>
+#include <ps_quiesce.h>
 
 #define NUM_REMOTE_LIST (PS_CACHE_LINE/sizeof(struct ps_mheader *))
 typedef unsigned long ps_desc_t;

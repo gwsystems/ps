@@ -3,8 +3,8 @@ include Makefile.inc
 
 # library
 PLATFILE = ps_plat.h
-QUISFILE = ps_quiesce_type.h
-CFILES  = $(wildcard *.c) $(wildcard plat/os/$(OSNAME)/*.c) $(wildcard plat/arch/$(ARCHNAME)/*.c) $(wildcard quiesce_type/$(QUISTYPE)/*.c)
+QUIESCEFILE = ps_quiesce.h
+CFILES  = $(wildcard *.c) $(wildcard plat/os/$(OSNAME)/*.c) $(wildcard plat/arch/$(ARCHNAME)/*.c) $(wildcard quiesce_type/$(QUIESCETYPE)/*.c)
 COBJS   = $(patsubst %.c,%.o,$(CFILES))
 CDEPS   = $(patsubst %.c,%.d,$(CFILES))
 CDEPRM  = $(patsubst %.c,%.d,$(CFILES))
@@ -20,11 +20,11 @@ config:
 	@echo '#include "plat/arch/$(ARCHNAME)/ps_arch.h"'       >> $(PLATFILE)
 	@echo '#include "plat/os/$(OSNAME)/ps_os.h"'             >> $(PLATFILE)
 	@echo '#endif	/* PS_PLAT_H */'                         >> $(PLATFILE)
-	@rm -f $(QUISFILE)
-	@echo '#ifndef PS_QUISTYPE_H'                            >  $(QUISFILE)
-	@echo '#define PS_QUISTYPE_H'                            >> $(QUISFILE)
-	@echo '#include "quiesce_type/$(QUISTYPE)/ps_quiesce.h"' >> $(QUISFILE)
-	@echo '#endif	/* PS_QUISTYPE_H */'                     >> $(QUISFILE)
+	@rm -f $(QUIESCEFILE)
+	@echo '#ifndef PS_QUIESCE_H'                                     >  $(QUIESCEFILE)
+	@echo '#define PS_QUIESCE_H'                                     >> $(QUIESCEFILE)
+	@echo '#include "quiesce_type/$(QUIESCETYPE)/ps_quiesce_impl.h"' >> $(QUIESCEFILE)
+	@echo '#endif	/* PS_QUIESCE_H */'                              >> $(QUIESCEFILE)
 
 
 $(PLATFILE): config
