@@ -91,6 +91,28 @@ main(void)
 	return 0;
 }
 
+/* #define REAL_TIME_PARSEC_TEST */
+#ifdef REAL_TIME_PARSEC_TEST
+ps_tsc_t _ps_period = 10000;
+__thread ps_tsc_t _ps_deadline = 0;
+
+static void
+ps_period_quiesce(void)
+{
+	ps_tsc_t tsc;
+
+	tsc = ps_tsc();
+	if (tsc >= _ps_deadline) {
+		_ps_deadline = tsc + _ps_period;
+		ps_quiesce_bench();
+	}
+}
+#else
+static void 
+ps_period_quiesce(void)
+{ ; }
+#endif
+
 #define N_OPS (50000000)
 #define N_LOG (N_OPS / PS_NUMCORES)
 static char ops[N_OPS] PS_ALIGNED;
@@ -120,6 +142,7 @@ bench(void)
 
 		if (ops[(unsigned long)id+op_jump*i]) {
 			ps_mem_free_bench(ps_mem_alloc_bench());
+			ps_period_quiesce();
 
 			e1 = ps_tsc();
 			cost = e1-s1;
