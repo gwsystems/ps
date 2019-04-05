@@ -11,7 +11,7 @@ CWARN     = -Wno-long-long
 CFLAGS    = -MD -MP -std=c11 -Wall -Wpedantic -Wextra $(CWARN) $(COPT) $(CINC) -Wno-unused-function
 
 ifeq ($(ARCHNAME), x86)
-CFLAGS+=-m32
+CFLAGS   += -m32
 endif
 
 MAKEFLAGS = --no-print-directory --section-alignment 0x1000 -I$(PWD)
