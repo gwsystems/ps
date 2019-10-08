@@ -76,6 +76,7 @@ ps_mem_fence(void)
 { __asm__ __volatile__("mfence" ::: "memory"); }
 
 #define ps_load(addr) (*(volatile __typeof__(*addr) *)(addr))
+#define ps_store(addr, val) ((*(volatile __typeof__(*addr) *)(addr)) = val)
 
 /*
  * Only atomic on a uni-processor, so not for cross-core coordination.
