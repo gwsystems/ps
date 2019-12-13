@@ -34,10 +34,13 @@
  * different offsets).
  */
 #ifndef PS_NUMCORES
-#define PS_NUMCORES      4
+#define PS_NUMCORES      80
 #endif
 #ifndef PS_NUMLOCALITIES
-#define PS_NUMLOCALITIES 1
+#define PS_NUMLOCALITIES 4
 #endif
-
+#ifndef PS_CORE_PER_NUMA
+#define PS_CORE_PER_NUMA 10
+#endif
+#define PS_CPU_FREQ (2000000)
 #endif	/* PS_CONFIG_H */

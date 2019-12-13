@@ -1,7 +1,7 @@
 include ../Makefile.inc
 
 CINC   += -I../
-LDFLAGS = -pthread -L..
+LDFLAGS = -l$(LNAME) -pthread -lnuma -L..
 
 # tests
 TCFILES = $(wildcard *.c)
@@ -17,7 +17,7 @@ all: $(EXECS)
 	$(CC) $(CINC) $(CFLAGS) -o $@ -c $<
 
 %.test:%.o
-	$(LD) $(LDFLAGS) -o $@ $< -l$(LNAME)
+	$(LD) -o $@ $< $(LDFLAGS)
 
 clean:
 	rm -f $(EXECS) $(TCOBJS) $(TCDEPS)

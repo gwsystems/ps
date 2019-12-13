@@ -6,7 +6,6 @@
  * Authors: Gabriel Parmer, gparmer@gwu.edu, 2015
  */
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <sched.h>

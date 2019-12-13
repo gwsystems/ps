@@ -30,7 +30,7 @@
 #include <ps_slab.h>
 
 #ifndef PS_QLIST_BATCH
-#define PS_QLIST_BATCH 128
+#define PS_QLIST_BATCH 16
 #endif
 
 struct ps_quiescence_timing {
