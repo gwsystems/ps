@@ -2,7 +2,7 @@ LNAME     = ps
 CLIB      = lib$(LNAME).a
 
 CINC     += -I. $(CINC_ENV)
-CC        = gcc
+CC        = $(CROSS_COMPILE)gcc
 LD        = $(CC)
 MAKE      = make
 
@@ -12,6 +12,8 @@ CFLAGS    = -MD -MP -std=c11 -Wall -Wpedantic -Wextra $(CWARN) $(COPT) $(CINC) -
 
 ifeq ($(ARCHNAME), x86)
 CFLAGS   += -m32
+else ifeq ($(ARCHNAME), cav7)
+CFLAGS   += -march=armv7-a
 endif
 
 MAKEFLAGS = --no-print-directory --section-alignment 0x1000 -I$(PWD)
