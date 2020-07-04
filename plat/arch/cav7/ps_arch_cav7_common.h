@@ -18,7 +18,7 @@
 typedef unsigned short int u16_t;
 typedef unsigned int u32_t;
 typedef unsigned long long u64_t;
-typedef u64_t ps_tsc_t; 	/* our time-stamp counter representation */
+typedef u32_t ps_tsc_t; 	/* our time-stamp counter representation */
 typedef u16_t coreid_t;
 typedef u16_t localityid_t;
 
@@ -56,7 +56,8 @@ static inline unsigned long
 ps_ldrexw(volatile unsigned long *addr)
 {
 	unsigned long result;
-	asm volatile ("ldrex %0, %1" : "=r" (result) : "Q" (*addr) );
+	asm volatile ( "ldrex %0, %1" : "=r" (result) : "Q" (*addr) );
+
 	return(result);
 }
 
@@ -64,7 +65,8 @@ static inline unsigned long
 ps_strexw(unsigned long value, volatile unsigned long *addr)
 {
 	unsigned long result;
-	asm volatile ("strex %0, %2, %1" : "=&r" (result), "=Q" (*addr) : "r" (value) );
+	asm volatile ( "strex %0, %2, %1" : "=&r" (result), "=Q" (*addr) : "r" (value) );
+
 	return(result);
 }
 
@@ -86,16 +88,17 @@ ps_cas(unsigned long *target, unsigned long old, unsigned long updated)
 	unsigned long oldval, res;
 
 	do {
-		oldval=ps_ldrexw(target);
+		oldval = ps_ldrexw(target);
 
-		if(oldval==old) /* 0=succeeded, 1=failed */
+		if(oldval == old) {
+			/* 0=succeeded, 1=failed */
 			res=ps_strexw(updated, target);
-		else {
+		} else {
 			ps_clrex();
+
 			return 0;
 		}
-	}
-	while(res);
+	} while(res);
 
 	return 1;
 }
@@ -110,10 +113,9 @@ ps_faa(int *var, int value)
 	int oldval;
 
 	do {
-		oldval=(int)ps_ldrexw((volatile unsigned long*)var);
-		res=ps_strexw((unsigned long)(oldval+value), (volatile unsigned long*)var);
-	}
-	while(res);
+		oldval = (int) ps_ldrexw((volatile unsigned long *) var);
+		res    = ps_strexw((unsigned long) (oldval+value), (volatile unsigned long *) var);
+	} while(res);
 
 	return oldval;
 }
@@ -135,16 +137,17 @@ ps_upcas(unsigned long *target, unsigned long old, unsigned long updated)
 	unsigned long oldval, res;
 
 	do {
-		oldval=ps_ldrexw(target);
+		oldval = ps_ldrexw(target);
 
-		if(oldval==old) /* 0=succeeded, 1=failed */
-			res=ps_strexw(updated, target);
-		else {
+		if(oldval == old) {
+			/* 0=succeeded, 1=failed */
+			res = ps_strexw(updated, target);
+		} else {
 			ps_clrex();
+
 			return 0;
 		}
-	}
-	while(res);
+	} while(res);
 
 	return 1;
 }
@@ -156,10 +159,9 @@ ps_upfaa(unsigned long *var, long value)
 	int oldval;
 
 	do {
-		oldval=(int)ps_ldrexw((volatile unsigned long*)var);
-		res=ps_strexw((unsigned long)(oldval+value), (volatile unsigned long*)var);
-	}
-	while(res);
+		oldval = (int) ps_ldrexw((volatile unsigned long *) var);
+		res    = ps_strexw((unsigned long) (oldval+value), (volatile unsigned long *) var);
+	} while(res);
 
 	return oldval;
 }
@@ -190,11 +192,17 @@ ps_lock_init(struct ps_lock *l)
 static inline ps_tsc_t
 ps_tsc(void)
 {
-	unsigned long a, d, c;
+	ps_tsc_t val;
+	
+	/*
+	 * NOTE: This only works if the cycle counter access is enabled in the kernel.
+	 * https://blog.regehr.org/archives/794
+	 */
 
-	/* __asm__ __volatile__("rdtsc" : "=a" (a), "=d" (d), "=c" (c) : : ); */
+	/* Read CCNT Register */
+	asm volatile ("MRC p15, 0, %0, c9, c13, 0\t\n": "=r"(val));
 
-	return ((u64_t)d << 32) | (u64_t)a;
+	return val;
 }
 
 #endif /* PS_ARCH_H */
