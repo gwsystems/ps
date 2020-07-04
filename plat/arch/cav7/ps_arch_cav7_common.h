@@ -55,7 +55,7 @@ static inline unsigned long
 ps_ldrexw(volatile unsigned long *addr)
 {
 	unsigned long result;
-	asm volatile ( "ldrex %0, %1" : "=r" (result) : "Q" (*addr) );
+	__asm__ __volatile__ ( "ldrex %0, %1" : "=r" (result) : "Q" (*addr) );
 
 	return(result);
 }
@@ -64,7 +64,7 @@ static inline unsigned long
 ps_strexw(unsigned long value, volatile unsigned long *addr)
 {
 	unsigned long result;
-	asm volatile ( "strex %0, %2, %1" : "=&r" (result), "=Q" (*addr) : "r" (value) );
+	__asm__ __volatile__ ( "strex %0, %2, %1" : "=&r" (result), "=Q" (*addr) : "r" (value) );
 
 	return(result);
 }
@@ -73,7 +73,7 @@ ps_strexw(unsigned long value, volatile unsigned long *addr)
 static inline void
 ps_clrex(void)
 {
-	asm volatile ("clrex" ::: "memory");
+	__asm__ __volatile__ ("clrex" ::: "memory");
 }
 
 /*
@@ -200,7 +200,7 @@ ps_tsc(void)
 	 */
 
 	/* Read CCNT Register */
-	asm volatile ("MRC p15, 0, %0, c9, c13, 0\t\n": "=r"(val));
+	__asm__ __volatile__ ("MRC p15, 0, %0, c9, c13, 0\t\n": "=r"(val));
 
 	return val;
 }
