@@ -10,15 +10,13 @@
  * versions.
  */
 
-#ifndef PS_ARCH_H
-#define PS_ARCH_H
-
-#include <ps_config.h>
+#ifndef PS_ARCH_CAV7_COMMON_H
+#define PS_ARCH_CAV7_COMMON_H
 
 typedef unsigned short int u16_t;
 typedef unsigned int u32_t;
 typedef unsigned long long u64_t;
-typedef u32_t ps_tsc_t; 	/* our time-stamp counter representation */
+typedef u64_t ps_tsc_t; 	/* our time-stamp counter representation */
 typedef u16_t coreid_t;
 typedef u16_t localityid_t;
 
@@ -29,14 +27,15 @@ typedef u16_t localityid_t;
 #define unlikely(x)    __builtin_expect(!!(x), 0)
 #endif
 
-#define PS_CACHE_LINE  64
-#define PS_CACHE_PAD   (PS_CACHE_LINE*2)
-#define PS_WORD        sizeof(long)
-#define PS_PACKED      __attribute__((packed))
-#define PS_ALIGNED     __attribute__((aligned(PS_CACHE_LINE)))
-#define PS_WORDALIGNED __attribute__((aligned(PS_WORD)))
-#define PS_PAGE_SIZE   4096
-#define PS_RNDUP(v, a) (-(-(v) & -(a))) /* from blogs.oracle.com/jwadams/entry/macros_and_powers_of_two */
+#define PS_CACHE_LINE       64
+#define PS_CACHE_PAD        (PS_CACHE_LINE*2)
+#define PS_CACHE_PAD_SZ(sz) (PS_CACHE_PAD - ((sz) % PS_CACHE_PAD))
+#define PS_WORD             sizeof(long)
+#define PS_PACKED           __attribute__((packed))
+#define PS_ALIGNED          __attribute__((aligned(PS_CACHE_LINE)))
+#define PS_WORDALIGNED      __attribute__((aligned(PS_WORD)))
+#define PS_PAGE_SIZE        4096
+#define PS_RNDUP(v, a)      (-(-(v) & -(a))) /* from blogs.oracle.com/jwadams/entry/macros_and_powers_of_two */
 
 #ifndef PS_WORDSIZE
 #define PS_WORDSIZE 32
@@ -125,6 +124,7 @@ ps_mem_fence(void)
 { __asm__ __volatile__("dsb" ::: "memory"); }
 
 #define ps_load(addr) (*(volatile __typeof__(*addr) *)(addr))
+#define ps_store(addr, val) ((*(volatile __typeof__(*addr) *)(addr)) = val)
 
 /*
  * Only atomic on a uni-processor, so not for cross-core coordination.
@@ -192,7 +192,7 @@ ps_lock_init(struct ps_lock *l)
 static inline ps_tsc_t
 ps_tsc(void)
 {
-	ps_tsc_t val;
+	unsigned int val;
 	
 	/*
 	 * NOTE: This only works if the cycle counter access is enabled in the kernel.
@@ -205,4 +205,4 @@ ps_tsc(void)
 	return val;
 }
 
-#endif /* PS_ARCH_H */
+#endif /* PS_ARCH_CAV7_COMMON_H */
