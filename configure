@@ -3,7 +3,7 @@
 if [ $# -ne 3 ]; then
     echo "Usage: $0 osname archname quiesce_type"
     echo "\tosname is in {linux, cos}"
-    echo "\tarchname is in {x86, x86_64, cav7}"
+    echo "\tarchname is in {x86, x86_64, armv7}"
     echo "\tquiesce_type is in {general, real_time, temporal}"
 else
     echo "OSNAME      = $1" > Makefile.config

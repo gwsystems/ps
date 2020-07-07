@@ -10,8 +10,8 @@
  * versions.
  */
 
-#ifndef PS_ARCH_CAV7_COMMON_H
-#define PS_ARCH_CAV7_COMMON_H
+#ifndef PS_ARCH_ARMV7_COMMON_H
+#define PS_ARCH_ARMV7_COMMON_H
 
 typedef unsigned short int u16_t;
 typedef unsigned int u32_t;
@@ -172,4 +172,4 @@ ps_tsc(void)
 	return val;
 }
 
-#endif /* PS_ARCH_CAV7_COMMON_H */
+#endif /* PS_ARCH_ARMV7_COMMON_H */

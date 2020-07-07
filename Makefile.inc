@@ -12,7 +12,7 @@ CFLAGS    = -MD -MP -std=c11 -Wall -Wpedantic -Wextra $(CWARN) $(COPT) $(CINC) -
 
 ifeq ($(ARCHNAME), x86)
 CFLAGS   += -m32 -D__x86__
-else ifeq ($(ARCHNAME), cav7)
+else ifeq ($(ARCHNAME), armv7)
 CFLAGS   += -march=armv7-a -D__arm__
 endif
 
