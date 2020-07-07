@@ -90,8 +90,8 @@ ps_cas(unsigned long *target, unsigned long old, unsigned long updated)
 		oldval = ps_ldrexw(target);
 
 		if(oldval == old) {
-			/* 0=succeeded, 1=failed */
-			res=ps_strexw(updated, target);
+			/* 0 = succeeded, 1 = failed */
+			res = ps_strexw(updated, target);
 		} else {
 			ps_clrex();
 
@@ -113,7 +113,7 @@ ps_faa(int *var, int value)
 
 	do {
 		oldval = (int) ps_ldrexw((volatile unsigned long *) var);
-		res    = ps_strexw((unsigned long) (oldval+value), (volatile unsigned long *) var);
+		res    = ps_strexw((unsigned long) (oldval + value), (volatile unsigned long *) var);
 	} while(res);
 
 	return oldval;
@@ -126,46 +126,13 @@ ps_mem_fence(void)
 #define ps_load(addr) (*(volatile __typeof__(*addr) *)(addr))
 #define ps_store(addr, val) ((*(volatile __typeof__(*addr) *)(addr)) = val)
 
-/*
- * Only atomic on a uni-processor, so not for cross-core coordination.
- * Faster on a multiprocessor when used to synchronize between threads
- * on a single core by avoiding locking.
- */
 static inline int
 ps_upcas(unsigned long *target, unsigned long old, unsigned long updated)
-{
-	unsigned long oldval, res;
-
-	do {
-		oldval = ps_ldrexw(target);
-
-		if(oldval == old) {
-			/* 0=succeeded, 1=failed */
-			res = ps_strexw(updated, target);
-		} else {
-			ps_clrex();
-
-			return 0;
-		}
-	} while(res);
-
-	return 1;
-}
+{ return ps_cas(target, old, updated); }
 
 static inline long
 ps_upfaa(unsigned long *var, long value)
-{
-	unsigned int res;
-	int oldval;
-
-	do {
-		oldval = (int) ps_ldrexw((volatile unsigned long *) var);
-		res    = ps_strexw((unsigned long) (oldval+value), (volatile unsigned long *) var);
-	} while(res);
-
-	return oldval;
-}
-
+{ return ps_faa(var, value); }
 
 /*
  * FIXME: this is truly an affront to humanity for now, but it is a
