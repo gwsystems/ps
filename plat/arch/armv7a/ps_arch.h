@@ -18,6 +18,6 @@
 #define PS_PLAT_SHIFTR32(v)
 #define PS_ATOMIC_POSTFIX "l"
 
-#include "ps_arch_armv7_common.h"
+#include "ps_arch_armv7a_common.h"
 
 #endif /* PS_ARCH_H */
