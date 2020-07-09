@@ -106,10 +106,10 @@ ps_cas(unsigned long *target, unsigned long old, unsigned long updated)
  * Fetch-and-add implementation on Cortex-A. Returns the original value.
  */
 static inline int 
-ps_faa(int *var, int value)
+ps_faa(unsigned long *var, long value)
 {
 	unsigned int res;
-	int oldval;
+	long oldval;
 
 	do {
 		oldval = (int) ps_ldrexw((volatile unsigned long *) var);
