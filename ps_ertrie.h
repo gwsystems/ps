@@ -6,6 +6,8 @@
 #ifndef ERTRIE_H
 #define ERTRIE_H
 
+#include <errno.h>
+
 #define CFORCEINLINE __attribute__((always_inline))
 
 /*
