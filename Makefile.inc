@@ -8,7 +8,7 @@ MAKE      = make
 
 COPT      = -O3
 CWARN     = -Wno-long-long
-CFLAGS    = -MD -MP -std=c11 -Wall -Wpedantic -Wextra $(CWARN) $(COPT) $(CINC) -Wno-unused-function
+CFLAGS    = -MD -MP -std=c11 -Wall -Wpedantic -Wextra $(CWARN) $(COPT) $(CINC) -Wno-unused-function -Wno-address-of-packed-member
 
 ifeq ($(ARCHNAME), x86)
 CFLAGS   += -m32 -D__x86__
