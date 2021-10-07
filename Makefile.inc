@@ -18,4 +18,4 @@ else ifeq ($(ARCHNAME), armv7a)
 CFLAGS   += -march=armv7-a -D__arm__
 endif
 
-MAKEFLAGS = --no-print-directory --section-alignment 0x1000 -I$(PWD)
+override MAKEFLAGS = --no-print-directory -I$(PWD)
