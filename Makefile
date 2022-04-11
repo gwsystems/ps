@@ -14,17 +14,29 @@ CDEPRM  = $(patsubst %.c,%.d,$(CFILES))
 all: $(CLIB)
 
 config:
-	@rm -f $(PLATFILE)
-	@echo '#ifndef PS_PLAT_H'                                        >  $(PLATFILE)
-	@echo '#define PS_PLAT_H'                                        >> $(PLATFILE)
-	@echo '#include "plat/arch/$(ARCHNAME)/ps_arch.h"'               >> $(PLATFILE)
-	@echo '#include "plat/os/$(OSNAME)/ps_os.h"'                     >> $(PLATFILE)
-	@echo '#endif	/* PS_PLAT_H */'                                 >> $(PLATFILE)
-	@rm -f $(QUIESCEFILE)
-	@echo '#ifndef PS_QUIESCE_H'                                     >  $(QUIESCEFILE)
-	@echo '#define PS_QUIESCE_H'                                     >> $(QUIESCEFILE)
-	@echo '#include "quiesce_type/$(QUIESCETYPE)/ps_quiesce_impl.h"' >> $(QUIESCEFILE)
-	@echo '#endif	/* PS_QUIESCE_H */'                              >> $(QUIESCEFILE)
+	@arch_res=`cat $(PLATFILE) | grep -w $(ARCHNAME)` || true; \
+	osname_res=`cat $(PLATFILE) | grep -w $(OSNAME)` || true; \
+	if [ -f $(PLATFILE) -a "$$arch_res" != "" -a "$$osname_res" != "" ]; then \
+		exit 0; \
+	else \
+		rm -f $(PLATFILE); \
+		echo '#ifndef PS_PLAT_H'                                        >  $(PLATFILE); \
+		echo '#define PS_PLAT_H'                                        >> $(PLATFILE); \
+		echo '#include "plat/arch/$(ARCHNAME)/ps_arch.h"'               >> $(PLATFILE); \
+		echo '#include "plat/os/$(OSNAME)/ps_os.h"'                     >> $(PLATFILE); \
+		echo '#endif	/* PS_PLAT_H */'                                 >> $(PLATFILE); \
+	fi 
+	
+	@quiesce_res=`cat $(QUIESCEFILE) | grep -w $(QUIESCETYPE)` || true; \
+	if [ -f $(QUIESCEFILE) -a "$$quiesce_res" != "" ]; then \
+		exit 0; \
+	else \
+		rm -f $(QUIESCEFILE); \
+		echo '#ifndef PS_QUIESCE_H'                                     >  $(QUIESCEFILE); \
+		echo '#define PS_QUIESCE_H'                                     >> $(QUIESCEFILE); \
+		echo '#include "quiesce_type/$(QUIESCETYPE)/ps_quiesce_impl.h"' >> $(QUIESCEFILE); \
+		echo '#endif	/* PS_QUIESCE_H */'                              >> $(QUIESCEFILE); \
+	fi
 
 
 $(PLATFILE): config
