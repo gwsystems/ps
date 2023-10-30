@@ -65,10 +65,14 @@ ps_cas(unsigned long *target, unsigned long old, unsigned long updated)
 static inline long
 ps_faa(unsigned long *target, long inc)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+/* GCC has bug of processing a warning(-Warray-bounds) and not get fixed, thus close the warning in this function */
         __asm__ __volatile__("lock " PS_FAA_STR
                              : "+m" (*target), "+q" (inc)
                              : : "memory", "cc");
         return inc;
+#pragma GCC diagnostic pop
 }
 
 static inline void
