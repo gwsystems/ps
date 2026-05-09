@@ -118,6 +118,8 @@ struct ps_lock {
 	unsigned long o;
 };
 
+#define PS_LOCK_INITIALIZER (struct ps_lock) {.o = 0}
+
 static inline void
 ps_lock_take(struct ps_lock *l)
 { while (!ps_cas(&l->o, 0, 1)) ; }
