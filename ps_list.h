@@ -32,16 +32,14 @@
  * ps_list_head_add(&h, &node, l);
  * ...
  * for (i = ps_list_head_first(&h, struct foo, l) ;
- *      i != ps_list_head(&h, struct foo, l) ;
+ *      !ps_list_is_head(&h, i, l) ;
  *      i = ps_list_next(i, l)) { ... }
- *
- * for (ps_list_iter_init(&h, i, l) ; !ps_list_iter_term(&h, i, l) ; i = ps_list_next(i, l)) { ... }
  *
  * ps_list_foreach(&h, i, l) { ... }
  *
  * ps_list_foreach_del(&h, i, tmp, l) {
  *          ps_list_rem(i, l);
- *          ps_free(i);
+ *          free(i);
  * }
  *
  */
