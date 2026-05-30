@@ -28,7 +28,7 @@
  * } node, *i, *tmp;
  *
  * ps_list_head_init(&h);
- * ps_list_init(&node);
+ * ps_list_init(&node, l);
  * ps_list_head_add(&h, &node, l);
  * ...
  * for (i = ps_list_head_first(&h, struct foo, l) ;
